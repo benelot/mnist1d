@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from .utils import ObjectView
+from utils import ObjectView
 
 def get_model_args(as_dict=False):
   arg_dict = {'input_size': 40,
@@ -36,6 +36,7 @@ def accuracy(model, inputs, targets):
 def train_model(dataset, model, args):
   criterion = nn.CrossEntropyLoss()
   optimizer = optim.Adam(model.parameters(), args.learning_rate, weight_decay=args.weight_decay)
+  lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=20, factor=0.9, eps=0, verbose=True)
 
   x_train, x_test = torch.Tensor(dataset['x']), torch.Tensor(dataset['x_test'])
   y_train, y_test = torch.LongTensor(dataset['y']), torch.LongTensor(dataset['y_test'])
@@ -58,6 +59,8 @@ def train_model(dataset, model, args):
           results['test_losses'].append(test_loss.item())
           results['train_acc'].append(accuracy(model, x_train, y_train))
           results['test_acc'].append(accuracy(model, x_test, y_test))
+          lr_scheduler.step(test_loss)
+          print(lr_scheduler.optimizer.param_groups[0]['lr'])
 
       if step > 0 and step % args.print_every == 0: # print out training progress
           t1 = time.time()

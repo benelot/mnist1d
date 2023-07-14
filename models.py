@@ -34,12 +34,14 @@ class MLPBase(nn.Module):
     return self.linear3(h)
 
 class ConvBase(nn.Module):
-    def __init__(self, output_size, channels=25, linear_in=125):
+    def __init__(self, output_size, channels=25, linear_in=225):
         super(ConvBase, self).__init__()
-        self.conv1 = nn.Conv1d(1, channels, 5, stride=2, padding=1)
+        self.conv1 = nn.Conv1d(1, channels, 10, stride=1, padding=1)
         self.conv2 = nn.Conv1d(channels, channels, 3, stride=2, padding=1)
         self.conv3 = nn.Conv1d(channels, channels, 3, stride=2, padding=1)
-        self.linear = nn.Linear(linear_in, output_size) # flattened channels -> 10 (assumes input has dim 50)
+        self.linear = nn.Linear(linear_in, 100) # flattened channels -> 10 (assumes input has dim 50)
+        self.linear2 = nn.Linear(100, 100)
+        self.linear3 = nn.Linear(100, output_size)
         print("Initialized ConvBase model with {} parameters".format(self.count_params()))
 
     def count_params(self):
@@ -51,7 +53,9 @@ class ConvBase(nn.Module):
         h2 = self.conv2(h1).relu()
         h3 = self.conv3(h2).relu()
         h3 = h3.view(h3.shape[0], -1) # flatten the conv features
-        return self.linear(h3) # a linear classifier goes on top
+        h4 = self.linear(h3).relu() # a linear classifier goes on top
+        h5 = self.linear2(h4).relu()
+        return self.linear3(h5)
 
 class GRUBase(torch.nn.Module):
   def __init__(self, input_size, output_size, hidden_size=6, time_steps=40, bidirectional=True):
